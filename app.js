@@ -1,139 +1,150 @@
-// Sports teams data by city
-const data = {
-  "boston": {
-    sports: [
-      { name: "Basketball (Celtics)", teamId: "bos_celtics" },
-      { name: "Baseball (Red Sox)", teamId: "bos_redsox" },
-      { name: "Hockey (Bruins)", teamId: "bos_bruins" },
-      { name: "Football (Patriots)", teamId: "ne_patriots" }
-    ]
-  },
-  "new york": {
-    sports: [
-      { name: "Basketball (Knicks)", teamId: "nyk" },
-      { name: "Basketball (Nets)", teamId: "bkn" },
-      { name: "Baseball (Yankees)", teamId: "nyy" },
-      { name: "Baseball (Mets)", teamId: "nym" },
-      { name: "Football (Giants)", teamId: "nyg" },
-      { name: "Football (Jets)", teamId: "nyj" },
-      { name: "Hockey (Rangers)", teamId: "nyr" },
-      { name: "Hockey (Islanders)", teamId: "nyi" }
-    ]
-  },
-  "los angeles": {
-    sports: [
-      { name: "Basketball (Lakers)", teamId: "lal" },
-      { name: "Basketball (Clippers)", teamId: "lac" },
-      { name: "Baseball (Dodgers)", teamId: "lad" },
-      { name: "Football (Rams)", teamId: "lar" },
-      { name: "Football (Chargers)", teamId: "lac_football" },
-      { name: "Hockey (Kings)", teamId: "lak" }
-    ]
-  },
-  "chicago": {
-    sports: [
-      { name: "Basketball (Bulls)", teamId: "chi_bulls" },
-      { name: "Baseball (Cubs)", teamId: "chi_cubs" },
-      { name: "Baseball (White Sox)", teamId: "chi_whitesox" },
-      { name: "Football (Bears)", teamId: "chi_bears" },
-      { name: "Hockey (Blackhawks)", teamId: "chi_blackhawks" }
-    ]
-  }
-};
+// -----------------------------
+// API-powered Sports Fan App
+// -----------------------------
 
-// Example players per team
-const players = {
-  bos_celtics: [
-    { name: "Jayson Tatum", height: "6'8", weight: "210 lbs", points: 1900 },
-    { name: "Jaylen Brown", height: "6'6", weight: "223 lbs", points: 1600 }
+const API_KEY = "1"; // free demo key from TheSportsDB
+
+// Supported teams grouped by city (team names must match TheSportsDB database)
+const data = {
+  "boston": [
+    "Boston Celtics",
+    "Boston Red Sox",
+    "Boston Bruins",
+    "New England Patriots"
   ],
-  bos_redsox: [
-    { name: "Rafael Devers", height: "6'0", weight: "240 lbs", points: 80 },
-    { name: "Trevor Story", height: "6'2", weight: "213 lbs", points: 65 }
+  "new york": [
+    "New York Knicks",
+    "Brooklyn Nets",
+    "New York Yankees",
+    "New York Mets",
+    "New York Giants",
+    "New York Jets",
+    "New York Rangers",
+    "New York Islanders"
   ],
-  ne_patriots: [
-    { name: "Mac Jones", height: "6'3", weight: "214 lbs", points: 220 },
-    { name: "Rhamondre Stevenson", height: "6'0", weight: "227 lbs", points: 180 }
+  "los angeles": [
+    "Los Angeles Lakers",
+    "Los Angeles Clippers",
+    "Los Angeles Dodgers",
+    "Los Angeles Rams",
+    "Los Angeles Chargers",
+    "Los Angeles Kings"
   ],
-  nyk: [
-    { name: "Julius Randle", height: "6'8", weight: "250 lbs", points: 1700 },
-    { name: "RJ Barrett", height: "6'6", weight: "214 lbs", points: 1400 }
-  ],
-  nyy: [
-    { name: "Aaron Judge", height: "6'7", weight: "282 lbs", points: 100 },
-    { name: "Giancarlo Stanton", height: "6'6", weight: "245 lbs", points: 90 }
-  ],
-  lal: [
-    { name: "LeBron James", height: "6'9", weight: "250 lbs", points: 2100 },
-    { name: "Anthony Davis", height: "6'10", weight: "253 lbs", points: 1800 }
-  ],
-  lad: [
-    { name: "Mookie Betts", height: "5'9", weight: "180 lbs", points: 120 },
-    { name: "Freddie Freeman", height: "6'5", weight: "220 lbs", points: 110 }
-  ],
-  chi_bulls: [
-    { name: "Zach LaVine", height: "6'5", weight: "200 lbs", points: 1600 },
-    { name: "DeMar DeRozan", height: "6'6", weight: "220 lbs", points: 1500 }
-  ],
-  chi_bears: [
-    { name: "Justin Fields", height: "6'3", weight: "228 lbs", points: 280 },
-    { name: "DJ Moore", height: "6'0", weight: "210 lbs", points: 240 }
+  "chicago": [
+    "Chicago Bulls",
+    "Chicago Cubs",
+    "Chicago White Sox",
+    "Chicago Bears",
+    "Chicago Blackhawks"
   ]
 };
 
-// Search function with flexible matching
+/* ---------- DOM helpers ---------- */
+const $ = id => document.getElementById(id);
+const show = id => { $(id).style.display = 'block'; };
+const hide = id => { $(id).style.display = 'none'; };
+
+/* ---------- Search logic ---------- */
 function searchCity() {
-  const city = document.getElementById("cityInput").value.toLowerCase().trim();
+  const raw = $('cityInput').value.toLowerCase().trim();
+  if (!raw) {
+    alert('Please enter a city name (e.g. Boston)');
+    return;
+  }
 
-  // Find closest city match
-  const foundCity = Object.keys(data).find(c => city.includes(c));
+  const foundKey = Object.keys(data).find(k => raw.includes(k));
+  if (!foundKey) {
+    alert('City not found in data!');
+    return;
+  }
 
-  if (foundCity) {
-    document.getElementById("searchPage").style.display = "none";
-    document.getElementById("sportsPage").style.display = "block";
-    document.getElementById("cityName").textContent = foundCity;
+  $('cityName').textContent = capitalize(foundKey);
+  const list = $('sportsList');
+  list.innerHTML = '';
 
-    const sportsList = document.getElementById("sportsList");
-    sportsList.innerHTML = "";
-    data[foundCity].sports.forEach(sport => {
-      const btn = document.createElement("button");
-      btn.textContent = sport.name;
-      btn.onclick = () => showTeam(sport.teamId, sport.name);
-      sportsList.appendChild(btn);
-    });
-  } else {
-    alert("City not found in data!");
+  data[foundKey].forEach(teamName => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="cardTitle">${teamName}</div>
+      <button>View Team</button>
+    `;
+    card.querySelector("button").onclick = () => showTeam(teamName);
+    list.appendChild(card);
+  });
+
+  hide('searchPage');
+  show('sportsPage');
+}
+
+/* ---------- Fetch roster from API ---------- */
+async function fetchTeamPlayers(teamName) {
+  try {
+    // Step 1: Find team info
+    const teamRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/searchteams.php?t=${encodeURIComponent(teamName)}`);
+    const teamData = await teamRes.json();
+    if (!teamData.teams) return [];
+
+    const teamId = teamData.teams[0].idTeam;
+
+    // Step 2: Get roster
+    const playersRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/lookup_all_players.php?id=${teamId}`);
+    const playersData = await playersRes.json();
+    return playersData.player || [];
+  } catch (err) {
+    console.error("Error fetching players:", err);
+    return [];
   }
 }
 
-function showTeam(teamId, sportName) {
-  document.getElementById("sportsPage").style.display = "none";
-  document.getElementById("teamPage").style.display = "block";
-  document.getElementById("teamName").textContent = sportName;
+/* ---------- Team page ---------- */
+async function showTeam(teamName) {
+  $('teamName').textContent = teamName;
+  $('playersList').innerHTML = "Loading...";
 
-  const playersList = document.getElementById("playersList");
-  playersList.innerHTML = "";
-  (players[teamId] || []).forEach(player => {
-    const div = document.createElement("div");
-    div.className = "playerCard";
-    div.innerHTML = `
-      <h3>${player.name}</h3>
-      <p>Height: ${player.height}</p>
-      <p>Weight: ${player.weight}</p>
-      <p>Fantasy Points: ${player.points}</p>
+  const roster = await fetchTeamPlayers(teamName);
+  $('playersList').innerHTML = "";
+
+  if (roster.length === 0) {
+    $('playersList').innerHTML = `<div class="empty">No players found.</div>`;
+    return;
+  }
+
+  roster.forEach(p => {
+    const card = document.createElement("div");
+    card.className = "playerCard";
+    card.innerHTML = `
+      <h3>${p.strPlayer}</h3>
+      <p>Position: ${p.strPosition || "N/A"}</p>
+      <p>Height: ${p.strHeight || "N/A"}</p>
+      <p>Weight: ${p.strWeight || "N/A"}</p>
+      <p>Nationality: ${p.strNationality || "N/A"}</p>
+      <img src="${p.strCutout || p.strThumb || ""}" alt="${p.strPlayer}" style="max-height:120px;">
     `;
-    playersList.appendChild(div);
+    $('playersList').appendChild(card);
   });
+
+  hide('sportsPage');
+  show('teamPage');
 }
 
-// Navigation helpers
-function goBack() {
-  document.getElementById("sportsPage").style.display = "none";
-  document.getElementById("searchPage").style.display = "block";
+/* ---------- Navigation helpers ---------- */
+function goBackToSearch() {
+  hide('sportsPage');
+  show('searchPage');
 }
-
 function goBackToSports() {
-  document.getElementById("teamPage").style.display = "none";
-  document.getElementById("sportsPage").style.display = "block";
+  hide('teamPage');
+  show('sportsPage');
 }
 
+/* ---------- Utils ---------- */
+function capitalize(s) {
+  return s.split(' ').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
+
+/* ---------- Wire buttons ---------- */
+$('searchBtn').addEventListener('click', searchCity);
+$('cityInput').addEventListener('keydown', e => { if (e.key === 'Enter') searchCity(); });
+$('backToSearch').addEventListener('click', goBackToSearch);
+$('backToSports').addEventListener('click', goBackToSports);
