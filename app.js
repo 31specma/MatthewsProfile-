@@ -1,42 +1,14 @@
 // -----------------------------
 // API-powered Sports Fan App
 // -----------------------------
-
 const API_KEY = "1"; // free demo key from TheSportsDB
 
-// Supported teams grouped by city (team names must match TheSportsDB database)
+// Teams grouped by city
 const data = {
-  "boston": [
-    "Boston Celtics",
-    "Boston Red Sox",
-    "Boston Bruins",
-    "New England Patriots"
-  ],
-  "new york": [
-    "New York Knicks",
-    "Brooklyn Nets",
-    "New York Yankees",
-    "New York Mets",
-    "New York Giants",
-    "New York Jets",
-    "New York Rangers",
-    "New York Islanders"
-  ],
-  "los angeles": [
-    "Los Angeles Lakers",
-    "Los Angeles Clippers",
-    "Los Angeles Dodgers",
-    "Los Angeles Rams",
-    "Los Angeles Chargers",
-    "Los Angeles Kings"
-  ],
-  "chicago": [
-    "Chicago Bulls",
-    "Chicago Cubs",
-    "Chicago White Sox",
-    "Chicago Bears",
-    "Chicago Blackhawks"
-  ]
+  "boston": ["Boston Celtics", "Boston Red Sox", "Boston Bruins", "New England Patriots"],
+  "new york": ["New York Knicks", "Brooklyn Nets", "New York Yankees", "New York Mets", "New York Giants", "New York Jets", "New York Rangers", "New York Islanders"],
+  "los angeles": ["Los Angeles Lakers", "Los Angeles Clippers", "Los Angeles Dodgers", "Los Angeles Rams", "Los Angeles Chargers", "Los Angeles Kings"],
+  "chicago": ["Chicago Bulls", "Chicago Cubs", "Chicago White Sox", "Chicago Bears", "Chicago Blackhawks"]
 };
 
 /* ---------- DOM helpers ---------- */
@@ -77,23 +49,33 @@ function searchCity() {
   show('sportsPage');
 }
 
-/* ---------- Fetch roster from API ---------- */
+/* ---------- Fetch roster ---------- */
 async function fetchTeamPlayers(teamName) {
   try {
-    // Step 1: Find team info
     const teamRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/searchteams.php?t=${encodeURIComponent(teamName)}`);
     const teamData = await teamRes.json();
     if (!teamData.teams) return [];
 
     const teamId = teamData.teams[0].idTeam;
 
-    // Step 2: Get roster
     const playersRes = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/lookup_all_players.php?id=${teamId}`);
     const playersData = await playersRes.json();
     return playersData.player || [];
   } catch (err) {
     console.error("Error fetching players:", err);
     return [];
+  }
+}
+
+/* ---------- Fetch player details ---------- */
+async function fetchPlayerDetails(playerId) {
+  try {
+    const res = await fetch(`https://www.thesportsdb.com/api/v1/json/${API_KEY}/lookupplayer.php?id=${playerId}`);
+    const data = await res.json();
+    return data.players ? data.players[0] : null;
+  } catch (err) {
+    console.error("Error fetching player:", err);
+    return null;
   }
 }
 
@@ -115,17 +97,41 @@ async function showTeam(teamName) {
     card.className = "playerCard";
     card.innerHTML = `
       <h3>${p.strPlayer}</h3>
-      <p>Position: ${p.strPosition || "N/A"}</p>
-      <p>Height: ${p.strHeight || "N/A"}</p>
-      <p>Weight: ${p.strWeight || "N/A"}</p>
-      <p>Nationality: ${p.strNationality || "N/A"}</p>
-      <img src="${p.strCutout || p.strThumb || ""}" alt="${p.strPlayer}" style="max-height:120px;">
+      <p>${p.strPosition || "N/A"}</p>
+      <img src="${p.strCutout || p.strThumb || ""}" alt="${p.strPlayer}" style="max-height:100px;">
     `;
+    card.onclick = () => showPlayerDetails(p.idPlayer);
     $('playersList').appendChild(card);
   });
 
   hide('sportsPage');
   show('teamPage');
+}
+
+/* ---------- Player detail page ---------- */
+async function showPlayerDetails(playerId) {
+  $('playerDetails').innerHTML = "Loading...";
+
+  const player = await fetchPlayerDetails(playerId);
+  if (!player) {
+    $('playerDetails').innerHTML = "<p>No details available.</p>";
+    return;
+  }
+
+  $('playerDetails').innerHTML = `
+    <h2>${player.strPlayer}</h2>
+    <img src="${player.strCutout || player.strThumb || ""}" alt="${player.strPlayer}" style="max-height:150px;">
+    <p><strong>Team:</strong> ${player.strTeam || "N/A"}</p>
+    <p><strong>Position:</strong> ${player.strPosition || "N/A"}</p>
+    <p><strong>Height:</strong> ${player.strHeight || "N/A"}</p>
+    <p><strong>Weight:</strong> ${player.strWeight || "N/A"}</p>
+    <p><strong>Nationality:</strong> ${player.strNationality || "N/A"}</p>
+    <h3>Reports</h3>
+    <p>${player.strDescriptionEN ? player.strDescriptionEN.slice(0, 500) + "..." : "No recent reports available."}</p>
+  `;
+
+  hide('teamPage');
+  show('playerPage');
 }
 
 /* ---------- Navigation helpers ---------- */
@@ -136,6 +142,10 @@ function goBackToSearch() {
 function goBackToSports() {
   hide('teamPage');
   show('sportsPage');
+}
+function goBackToTeam() {
+  hide('playerPage');
+  show('teamPage');
 }
 
 /* ---------- Utils ---------- */
@@ -148,3 +158,4 @@ $('searchBtn').addEventListener('click', searchCity);
 $('cityInput').addEventListener('keydown', e => { if (e.key === 'Enter') searchCity(); });
 $('backToSearch').addEventListener('click', goBackToSearch);
 $('backToSports').addEventListener('click', goBackToSports);
+$('backToTeam').addEventListener('click', goBackToTeam);
