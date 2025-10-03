@@ -1,7 +1,10 @@
+// -----------------------------
+// Hardcoded Team Data (Option B)
+// -----------------------------
 const TEAM_DATA = {
   "boston": {
     teams: [
-      // Boston Celtics - NBA 2025–26
+      // NBA
       {
         name: "Boston Celtics",
         sport: "basketball",
@@ -13,8 +16,7 @@ const TEAM_DATA = {
           { name: "Max Shulga", position: "G", height: "6'5\"", weight: "210 lbs", fantasyPoints: 1000 }
         ]
       },
-      
-      // Boston Red Sox - MLB 2025
+      // MLB
       {
         name: "Boston Red Sox",
         sport: "baseball",
@@ -26,8 +28,7 @@ const TEAM_DATA = {
           { name: "Garrett Crochet", position: "P", height: "6'6\"", weight: "245 lbs", fantasyPoints: 80 }
         ]
       },
-
-      // Boston Bruins - NHL 2025–26
+      // NHL
       {
         name: "Boston Bruins",
         sport: "hockey",
@@ -39,8 +40,7 @@ const TEAM_DATA = {
           { name: "Jeremy Swayman", position: "G", height: "6'3\"", weight: "205 lbs", fantasyPoints: 80 }
         ]
       },
-
-      // New England Patriots - NFL 2025
+      // NFL
       {
         name: "New England Patriots",
         sport: "football",
@@ -55,3 +55,90 @@ const TEAM_DATA = {
     ]
   }
 };
+
+// -----------------------------
+// DOM helpers
+// -----------------------------
+const $ = id => document.getElementById(id);
+const show = id => $(id).style.display = 'block';
+const hide = id => $(id).style.display = 'none';
+
+// -----------------------------
+// Search City
+// -----------------------------
+function searchCity() {
+  const raw = $('cityInput').value.toLowerCase().trim();
+  const city = TEAM_DATA[raw];
+  if (!city) {
+    alert('City not found!');
+    return;
+  }
+
+  $('cityName').textContent = raw.charAt(0).toUpperCase() + raw.slice(1);
+  const list = $('sportsList');
+  list.innerHTML = '';
+
+  city.teams.forEach(team => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div><strong>${team.name}</strong> (${team.sport})</div>
+      <button>View Team</button>
+    `;
+    card.querySelector('button').onclick = () => showTeam(team);
+    list.appendChild(card);
+  });
+
+  hide('searchPage');
+  show('sportsPage');
+}
+
+// -----------------------------
+// Show Team Players
+// -----------------------------
+function showTeam(team) {
+  $('teamName').textContent = team.name;
+  const list = $('playersList');
+  list.innerHTML = '';
+
+  if (!team.roster || team.roster.length === 0) {
+    list.innerHTML = '<p>No players found for this team.</p>';
+    return;
+  }
+
+  team.roster.forEach(player => {
+    const card = document.createElement('div');
+    card.className = 'playerCard';
+    card.innerHTML = `
+      <h3>${player.name}</h3>
+      <p>Position: ${player.position}</p>
+      <p>Height: ${player.height}</p>
+      <p>Weight: ${player.weight}</p>
+      <p>Fantasy Points: ${player.fantasyPoints}</p>
+    `;
+    list.appendChild(card);
+  });
+
+  hide('sportsPage');
+  show('teamPage');
+}
+
+// -----------------------------
+// Navigation
+// -----------------------------
+function goBackToSearch() {
+  hide('sportsPage');
+  show('searchPage');
+}
+function goBackToSports() {
+  hide('teamPage');
+  show('sportsPage');
+}
+
+// -----------------------------
+// Event Listeners
+// -----------------------------
+$('searchBtn').addEventListener('click', searchCity);
+$('cityInput').addEventListener('keydown', e => { if (e.key === 'Enter') searchCity(); });
+$('backToSearch').addEventListener('click', goBackToSearch);
+$('backToSports').addEventListener('click', goBackToSports);
