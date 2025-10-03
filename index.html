@@ -2,29 +2,34 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sports Fan Site</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Sports Teams</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .card, .playerCard { border: 1px solid #ccc; padding: 10px; margin: 5px 0; border-radius: 5px; }
+    button { margin-top: 5px; cursor: pointer; }
+  </style>
 </head>
 <body>
+
   <!-- Search Page -->
   <div id="searchPage">
-    <h1>Search Your City</h1>
-    <input id="cityInput" type="text" placeholder="Enter city name">
-    <button onclick="searchCity()">Search</button>
+    <h2>Search City</h2>
+    <input type="text" id="cityInput" placeholder="Enter city name">
+    <button id="searchBtn">Search</button>
   </div>
 
   <!-- Sports Page -->
   <div id="sportsPage" style="display:none;">
-    <h1>Sports Teams in <span id="cityName"></span></h1>
+    <h2 id="cityName"></h2>
     <div id="sportsList"></div>
-    <button onclick="goBack()">Back</button>
+    <button id="backToSearch">Back to Search</button>
   </div>
 
   <!-- Team Page -->
   <div id="teamPage" style="display:none;">
-    <h1 id="teamName"></h1>
+    <h2 id="teamName"></h2>
     <div id="playersList"></div>
-    <button onclick="goBackToSports()">Back</button>
+    <button id="backToSports">Back to Teams</button>
   </div>
 
   <script src="app.js"></script>
